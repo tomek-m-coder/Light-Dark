@@ -1,247 +1,61 @@
-// Canvas
-const { body } = document;
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-const width = 500;
-const height = 700;
-const screenWidth = window.screen.width;
-const canvasPosition = screenWidth / 2 - width / 2;
-const isMobile = window.matchMedia('(max-width: 600px)');
-const gameOverEl = document.createElement('div');
+const toggleSwitch = document.querySelector('input[type="checkbox"]');
+const nav = document.getElementById('nav');
+const toggleIcon = document.getElementById('toggle-icon');
+const image1 = document.getElementById('image1');
+const image2 = document.getElementById('image2');
+const image3 = document.getElementById('image3');
+const textBox = document.getElementById('text-box');
 
-// Paddle
-const paddleHeight = 10;
-const paddleWidth = 50;
-const paddleDiff = 25;
-let paddleBottomX = 225;
-let paddleTopX = 225;
-let playerMoved = false;
-let paddleContact = false;
-
-// Ball
-let ballX = 250;
-let ballY = 350;
-const ballRadius = 5;
-
-// Speed
-let speedY;
-let speedX;
-let trajectoryX;
-let computerSpeed;
-
-// Change Mobile Settings
-if (isMobile.matches) {
-  speedY = -2;
-  speedX = speedY;
-  computerSpeed = 4;
-} else {
-  speedY = -1;
-  speedX = speedY;
-  computerSpeed = 3;
+//For light and dark mode image
+function imageMode(color) {
+    image1.src = `pictures/undraw_proud_coder_${color}.svg`;
+    image2.src = `pictures/undraw_feeling_proud_${color}.svg`;
+    image3.src = `pictures/undraw_conceptual_idea_${color}.svg`;
 }
 
-// Score
-let playerScore = 0;
-let computerScore = 0;
-const winningScore = 7;
-let isGameOver = true;
-let isNewGame = true;
-
-// Render Everything on Canvas
-function renderCanvas() {
-  // Canvas Background
-  context.fillStyle = 'black';
-  context.fillRect(0, 0, width, height);
-
-  // Paddle Color
-  context.fillStyle = 'white';
-
-  // Player Paddle (Bottom)
-  context.fillRect(paddleBottomX, height - 20, paddleWidth, paddleHeight);
-
-  //Computer Paddle (Top)
-  context.fillRect(paddleTopX, 10, paddleWidth, paddleHeight);
-
-  // Dashed Center Line
-  context.beginPath();
-  context.setLineDash([4]);
-  context.moveTo(0, 350);
-  context.lineTo(500, 350);
-  context.strokeStyle = 'grey';
-  context.stroke();
-
-  // Ball
-  context.beginPath();
-  context.arc(ballX, ballY, ballRadius, 2 * Math.PI, false);
-  context.fillStyle = 'white';
-  context.fill();
-
-  // Score
-  context.font = '32px Courier New';
-  context.fillText(playerScore, 20, canvas.height / 2 + 50);
-  context.fillText(computerScore, 20, canvas.height / 2 - 30);
+// Dark mode
+function darkMode() {
+    nav.style.backgroundColor = 'rgb(0 0 0 / 50%)';
+    textBox.style.backgroundColor ='rgb(255 255 255 / 50%)'
+    toggleIcon.children[0].textContent = 'Dark Mode';
+    toggleIcon.children[1].classList.remove('fa-sun');
+    toggleIcon.children[1].classList.add('fa-moon');
+    imageMode('dark');
 }
 
-// Create Canvas Element
-function createCanvas() {
-  canvas.width = width;
-  canvas.height = height;
-  body.appendChild(canvas);
-  renderCanvas();
+// Light  mode
+function lightMode() {
+    nav.style.backgroundColor = 'rgb(255 255 255 / 50%)';
+    textBox.style.backgroundColor ='rgb(0 0 0 / 50%)'
+    toggleIcon.children[0].textContent = 'Light mode';
+    toggleIcon.children[1].classList.remove('fa-moon');
+    toggleIcon.children[1].classList.add('fa-sun');
+    imageMode('light');
 }
 
-// Reset Ball to Center
-function ballReset() {
-  ballX = width / 2;
-  ballY = height / 2;
-  speedY = -3;
-  paddleContact = false;
-}
-
-// Adjust Ball Movement
-function ballMove() {
-  // Vertical Speed
-  ballY += -speedY;
-  // Horizontal Speed
-  if (playerMoved && paddleContact) {
-    ballX += speedX;
-  }
-}
-
-// Determine What Ball Bounces Off, Score Points, Reset Ball
-function ballBoundaries() {
-  // Bounce off Left Wall
-  if (ballX < 0 && speedX < 0) {
-    speedX = -speedX;
-  }
-  // Bounce off Right Wall
-  if (ballX > width && speedX > 0) {
-    speedX = -speedX;
-  }
-  // Bounce off player paddle (bottom)
-  if (ballY > height - paddleDiff) {
-    if (ballX > paddleBottomX && ballX < paddleBottomX + paddleWidth) {
-      paddleContact = true;
-      // Add Speed on Hit
-      if (playerMoved) {
-        speedY -= 1;
-        // Max Speed
-        if (speedY < -5) {
-          speedY = -5;
-          computerSpeed = 6;
-        }
-      }
-      speedY = -speedY;
-      trajectoryX = ballX - (paddleBottomX + paddleDiff);
-      speedX = trajectoryX * 0.3;
-    } else if (ballY > height) {
-      // Reset Ball, add to Computer Score
-      ballReset();
-      computerScore++;
-    }
-  }
-  // Bounce off computer paddle (top)
-  if (ballY < paddleDiff) {
-    if (ballX > paddleTopX && ballX < paddleTopX + paddleWidth) {
-      // Add Speed on Hit
-      if (playerMoved) {
-        speedY += 1;
-        // Max Speed
-        if (speedY > 5) {
-          speedY = 5;
-        }
-      }
-      speedY = -speedY;
-    } else if (ballY < 0) {
-      // Reset Ball, add to Player Score
-      ballReset();
-      playerScore++;
-    }
-  }
-}
-
-// Computer Movement
-function computerAI() {
-  if (playerMoved) {
-    if (paddleTopX + paddleDiff < ballX) {
-      paddleTopX += computerSpeed;
+// Switch Theme Dynamically
+function switchTheme(event) {
+    if(event.target.checked) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        darkMode();
     } else {
-      paddleTopX -= computerSpeed;
+        document.documentElement.setAttribute('data-theme', 'light')
+        localStorage.setItem('theme', 'light');
+        lightMode();
     }
-  }
 }
 
-function showGameOverEl(winner) {
-  // Hide Canvas
-  canvas.hidden = true;
+// Event Listener
+toggleSwitch.addEventListener('change', switchTheme);
 
-  // Container
-  gameOverEl.textContent = '';
-  gameOverEl.classList.add('game-over-container');
+// Check Local storage for Theme
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme) {
+    document.documentElement.setAttribute('data-theme', currentTheme);
 
-  // Title
-  const title = document.createElement('h1');
-  title.textContent = `${winner} Wins!`;
-
-  // Button
-  const playAgainBtn = document.createElement('button');
-  playAgainBtn.setAttribute('onclick', 'startGame()');
-  playAgainBtn.textContent = 'Play Again';
-
-  // Append
-  gameOverEl.append(title, playAgainBtn);
-  body.appendChild(gameOverEl);
-}
-
-// Check If One Player Has Winning Score, If They Do, End Game
-function gameOver() {
-  if (playerScore === winningScore || computerScore === winningScore) {
-    isGameOver = true;
-    // Set Winner
-    const winner = playerScore === winningScore ? 'Player 1' : 'Computer';
-    showGameOverEl(winner);
-  }
-}
-
-// Called Every Frame
-function animate() {
-  renderCanvas();
-  ballMove();
-  ballBoundaries();
-  computerAI();
-  gameOver();
-  if (!isGameOver) {
-    window.requestAnimationFrame(animate);
-  }
-}
-
-// Start Game, Reset Everything
-function startGame() {
-  if (isGameOver && !isNewGame) {
-    body.removeChild(gameOverEl);
-    canvas.hidden = false;
-  }
-  isGameOver = false;
-  isNewGame = false;
-  playerScore = 0;
-  computerScore = 0;
-  ballReset();
-  createCanvas();
-  animate();
-  canvas.addEventListener('mousemove', (e) => {
-    playerMoved = true;
-    // Compensate for canvas being centered
-    paddleBottomX = e.clientX - canvasPosition - paddleDiff;
-    if (paddleBottomX < paddleDiff) {
-      paddleBottomX = 0;
+    if(currentTheme === 'dark') {
+        toggleSwitch.checked = true;
+        darkMode();
     }
-    if (paddleBottomX > width - paddleWidth) {
-      paddleBottomX = width - paddleWidth;
-    }
-    // Hide Cursor
-    canvas.style.cursor = 'none';
-  });
 }
-
-// On Load
-startGame();
